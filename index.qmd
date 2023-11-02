@@ -8,7 +8,7 @@ editor: visual
 
 ### Introdução
 
-Esta é uma breve análise do Internet Movie Database (IMDb). Vamos utilizar, aqui, três bases disponibilizadas pela Curso-R que armazenam, cada qual, informações sobre milhares de filmes, sobre as pessoas que dirigiram a atuaram nestes filmes e resumos estatísticos sobre a avaliação que estes filmes receberam.
+Esta é uma breve análise do Internet Movie Database (IMDb). Vamos utilizar, aqui, três bases disponibilizadas pela Curso-R que armazenam, cada qual, informações sobre milhares de filmes, sobre as pessoas que dirigiram, que atuaram e resumos estatísticos sobre a avaliação que estes filmes receberam.
 
 #### Pacotes utilizados
 
@@ -83,8 +83,6 @@ imdb |>
   # Criando uma coluna chamada "dia_lancamento"
   mutate(           # A função weekday mostra o dia da semana
     dia_lancamento = weekdays(as_date(data_lancamento))) |> 
-  # Remove os NA's
-  drop_na() |> 
   # Cria uma nova coluna chamada "total" com a quantidade de filmes em cada dia
   count(dia_lancamento, name = "total") |> 
   # Coloca em ordem decrescente
@@ -101,7 +99,7 @@ imdb |>
 
 ###### 2. Qual o top 5 países com mais filmes na base?
 
-Veja abaixo que foi necessário fazer uma transformação no dataset. Basicamente, utilzamos a função `separate_longer_delim` para "esticar verticalmente" a nossa base. Em outras palavras, desagregamos os valores da coluna *pais* em novas linhas, para contar quantas vezes cada país aparece em nossa bae.
+Veja abaixo que foi necessário fazer uma transformação no dataset. Basicamente, utilizamos a função `separate_longer_delim` para "esticar verticalmente" a nossa base. Em outras palavras, desagregamos os valores da coluna *pais* em novas linhas, para contar quantas vezes cada país aparece em nossa bae.
 
 ```{r}
 imdb |>
@@ -168,7 +166,7 @@ imdb |>
     align = "c")
 ```
 
-Veja que temos diferentes tipos de moedas na coluna `orcamento` mas apenas dólares (\$) na coluna `receita`.
+Veja que temos diferentes tipos de moedas na coluna `orcamento`, mas apenas dólares (\$) na coluna `receita`.
 
 ###### 4. Considerando apenas orçamentos e receitas em dólar (\$), qual o gênero com maior lucro? E com maior nota média?
 
@@ -248,13 +246,13 @@ Há de se considerar duas questões que tornam a comparação mais complexa do q
 
 Em segundo lugar, os valores de orçamento e receita não foram ajustados pela inflação, o que invalida a comparação entre filmes de diferentes épocas. Assim, aqui, vamos lidar somente com este segundo problema. Abaixo, apresentamos uma nova comparação com os valores de orçamento e receita reajustado pela inflação.
 
-O primeiro passo, então, é buscar uma base de dados contendo uma série histórica com a inflação dos EUA. Uma rápida busca na internet e achamos o site do U.S. Bureau of Labor Statistics que disponibiliza o Consumer Price Index (CPI) dos EUA desde 1913.
+O primeiro passo, então, é buscar uma base de dados contendo uma série histórica com a inflação dos EUA. Uma rápida busca na internet e achamos o site do U.S. Bureau of Labor Statistics que disponibiliza o Consumer Price Index (CPI) dos EUA desde 1913 até 2022.
 
-O site da [série histórica com a inflação dos EUA](https://data.bls.gov/pdq/SurveyOutputServlet) pode ser acessado acessando o link.
+O site da [série histórica com a inflação dos EUA](https://data.bls.gov/pdq/SurveyOutputServlet) pode ser acessado pelo link.
 
 **Base com série história do Consumer Price Index (USA)**
 
-Para fazer o ajuste pela inflação, queremos a média anual Consumer Index Price. Por esta razão, tivemos que fazer uma transformação na base. Utilizando a função `pivot_longer`, transformamos cada mês em linhas e o colocamos em uma nova coluna chamada `mes`. Em seguida, agrupamos por ano (`Year`) e calculamos a média.
+Para fazer o ajuste pela inflação, queremos a média anual do Consumer Index Price. Por esta razão, tivemos que fazer uma transformação na base. Utilizando a função `pivot_longer`, transformamos cada mês em linhas e o colocamos em uma nova coluna chamada `mes`. Em seguida, agrupamos por ano (`Year`) e calculamos a média.
 
 ```{r}
 # Importando a base com a série histórica
@@ -290,13 +288,13 @@ current_inflation <- cpi_usa |>
 
 Vamos utilizar a seguinte fórmula para fazer o ajuste:
 
-$$valor_{atual} = valor_{ano-t}(\frac{IPC_{atual}}{IPC_{ano-t}})$$
+$$valor_{atual} = valor_{ano-t}(\frac{CPI_{atual}}{CPI_{ano-t}})$$
 
 Para confirmar os resultados manualmente, basta acessar o seguinte endereço: <https://www.bls.gov/data/inflation_calculator.htm>
 
 **Ajustando pela inflação**
 
-Salvamos a nossa base em um novo objeto com os valores do orçamento e receita ajustados pela inflação. Muitas transformações foram feitas até chegarmos aos valores ajsutados. Resumindo os procedimentos:
+Salvamos a nossa base em um novo objeto com os valores do orçamento e receita ajustados pela inflação. Muitas transformações foram feitas até chegarmos aos valores ajustados. Resumindo os procedimentos:
 
 1.  Criamos novas colunas somente com os valores das colunas `orcamento` e `receita`;
 
@@ -304,13 +302,13 @@ Salvamos a nossa base em um novo objeto com os valores do orçamento e receita a
 
 3.  Transformamos os valores das colunas `orcamento` e `receita` em formato numérico e calculamos o lucro;
 
-4.  Fizemos um join entre a `imdb` e a `cpi_usa`;
+4.  Fizemos um `left_join` entre a `imdb` e a `cpi_usa`;
 
-5.  Ajustamos o valores das colunas `orcamento`, `receita` e `lucro` pela inflação (para valores de 2022);  
+5.  Ajustamos o valores das colunas `orcamento`, `receita` e `lucro` pela inflação (para valores de 2022);
 
-6. Salvamos essas transformações em um novo objeto chamado `imdb_adjusted_inf` (para usarmos novamente, caso necessário);  
+6.  Salvamos essas transformações em um novo objeto chamado `imdb_adjusted_inf` (para usarmos novamente, caso necessário);
 
-7. Apresentamos em uma nova os gêneros de filmes com os maiores lucros corrigidos pela inflação (para valores de 2022).
+7.  Apresentamos em uma nova os gêneros de filmes com os maiores lucros corrigidos pela inflação (para valores de 2022).
 
 ```{r}
 # Base imdb com valores ajustados pela inflação
@@ -391,7 +389,7 @@ imdb_adjusted_inf |>
 
 **Gêneros com maior média**
 
-Continuamos usando somente os filmes cujas as colunas `orcamento` e `receita` estavam em dólares (\$) e, em seguida, apresentamos em formato de tabela os filmes com as maiores notas médias *ponderadas*.
+Continuamos usando somente os filmes em que as colunas `orcamento` e `receita` estavam em dólares (\$) e, em seguida, apresentamos em formato de tabela os filmes com as maiores notas médias *ponderadas*.
 
 ```{r}
 # Generos com a maior nota média
@@ -438,7 +436,7 @@ filme_fav <- imdb |>
 
 Para responder os itens desta pergunta 5, vamos utilizar largamente a função `pull()`. O propósito é guardar informações em vetores para usá-los diretamente no corpo do nosso texto escrito em Quarto. Isso facilita bastante a escrita. Se eu escolher outro filme favorito, posso simplesmente escrever o nome dele no código acima e todos os outros códigos abaixos vão buscar as infos. desse meu novo filme favorito!
 
-**a)**  Quem dirigiu o filme? Faça uma ficha dessa pessoa: idade (hoje em dia ou data de falecimento), onde nasceu, quantos filmes já dirigiu, qual o lucro médio dos filmes que dirigiu (considerando apenas valores em dólar) e outras informações que achar interessante (base `imdb_pessoas`).
+**a)** Quem dirigiu o filme? Faça uma ficha dessa pessoa: idade (hoje em dia ou data de falecimento), onde nasceu, quantos filmes já dirigiu, qual o lucro médio dos filmes que dirigiu (considerando apenas valores em dólar) e outras informações que achar interessante (base `imdb_pessoas`).
 
 ```{r}
 # Vamos extrair algumas informações de quem dirigiu meu filme favorito
@@ -524,7 +522,7 @@ lucro_medio <- imdb_adjusted_inf |>
 
 Meu filme favorito é `r filme_fav`. `r direcao_nm`, responsável pela direção do filme, nasceu em `r cidade_nasc`, que fica no `r estado_nasc`, `r pais_nasc`. Atualmente, ele está com `r idade` anos de idade e já dirigiu um total de `r qtde_filmes` filmes. O lucro médio de seus flimes é de cerca de `r round(lucro_medio/1000000, 2)` milhões de dólares (ajustados pela inflação!).
 
-**b)**  Qual a posição desse filme no ranking de notas do IMDB? E no ranking de lucro (considerando apenas valores em dólar)?
+**b)** Qual a posição desse filme no ranking de notas do IMDB? E no ranking de lucro (considerando apenas valores em dólar)?
 
 Novamente vamos salvar as informações de interesse em vetores para usá-los no corpo do nosso texto.
 
@@ -571,7 +569,7 @@ ranking_lucro_filme_fav <- imdb_adjusted_inf |>
 
 No ranking de notas do IMDb meu filme favorito fica na posição de número `r ranking_nota_filme_fav` e no ranking de lucro na posição de número `r ranking_lucro_filme_fav`.
 
-**c)**  Em que dia esse filme foi lançado? E dia da semana? Algum outro filme foi lançado no mesmo dia? Quantos anos você tinha nesse dia?
+**c)** Em que dia esse filme foi lançado? E dia da semana? Algum outro filme foi lançado no mesmo dia? Quantos anos você tinha nesse dia?
 
 ```{r}
 dia_lancamento <- imdb |> 
@@ -613,11 +611,11 @@ qtde_filmes_lancados_msm_dia <- imdb |>
   pull()
 ```
 
-`r filme_fav` foi lançado em `r dt_filme_fav`. Ou seja, numa `r dia_semana_lancamento` do mês de outubro de 2014. Além do filme de `r direcao_nm`, outros `r qtde_filmes_lancados_msm_dia` filmes foram lançados naquela data. Na época, eu tinha apenas `r minha_idade` anos de idade. 
+`r filme_fav` foi lançado em `r dt_filme_fav`. Ou seja, numa `r dia_semana_lancamento` do mês de outubro de 2014. Além do filme de `r direcao_nm`, outros `r qtde_filmes_lancados_msm_dia` filmes foram lançados naquela data. Na época, eu tinha apenas `r minha_idade` anos de idade.
 
-**d)**  Faça um gráfico representando a distribuição da nota atribuída a esse filme por idade (base `imdb_avaliacoes`).
+**d)** Faça um gráfico representando a distribuição da nota atribuída a esse filme por idade (base `imdb_avaliacoes`).
 
-Para representar visualmente a distribuição da nota atribuída a `r filme_fav` por idade, nos inspiramos em um gráfico feito por Cedric Scherer. O link com o gráfico feito por ele está disponel [neste link](<https://www.cedricscherer.com/2023/10/26/yet-another-how-to-on-labelling-bar-graphs-in-ggplot2/>).
+Para representar visualmente a distribuição da nota atribuída a `r filme_fav` por idade, nos inspiramos em um gráfico feito por Cedric Scherer. O link com o gráfico feito por ele está disponel [neste link](https://www.cedricscherer.com/2023/10/26/yet-another-how-to-on-labelling-bar-graphs-in-ggplot2/).
 
 Antes de iniciar o `ggplot`, precisamos fazer algumas transformações.
 
@@ -726,4 +724,3 @@ df |>
     y = "Nota média"
   )
 ```
-
