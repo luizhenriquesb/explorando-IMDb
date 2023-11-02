@@ -1,0 +1,697 @@
+---
+title: "Explorando IMDb"
+subtitle: "Trabalho final - R4DS II"
+author: "Luiz Henrique da Silva Batista"
+format: html
+editor: visual
+---
+
+### Introdução
+
+Esta é uma breve análise do Internet Movie Database (IMDb). Vamos utilizar, aqui, três bases disponibilizadas pela Curso-R que armazenam, cada qual, informações sobre milhares de filmes, sobre as pessoas que dirigiram a atuaram nestes filmes e resumos estatísticos sobre a avaliação que estes filmes receberam.
+
+A ideia é responder algumas questões que foram propostas pela equipe da Curso-R.
+
+#### Pacotes utilizados
+
+```{r, message=FALSE, results='hide'}
+library(tidyverse)
+library(knitr)
+library(readxl)
+library(basesCursoR)
+```
+
+#### Importando os datasets
+
+```{r, message=FALSE, results='hide'}
+imdb <- basesCursoR::pegar_base("imdb_completa")
+imdb_pessoas <- basesCursoR::pegar_base("imdb_pessoas")
+imdb_avaliacoes <- basesCursoR::pegar_base("imdb_avaliacoes")
+```
+
+### Vamos às perguntas!
+
+###### 1. Qual o mês do ano com o maior número de filmes? E o dia do ano?
+
+Vamos começar apresentando o mês e, em seguida, o ano.
+
+**Meses do ano**
+
+```{r, warning=FALSE}
+imdb |> 
+  # Criando uma coluna chamada "mês"
+  mutate(mes = month(as_date(data_lancamento), 
+                     # Identifica o nome do mês (jan, fev, mar, etc.)
+                     label = TRUE)
+         ) |> 
+  # Cria uma nova coluna chamada "total" com a quantidade de filmes em cada mês
+  count(mes, name = "total") |> 
+  # Coloca em ordem decrescente
+  arrange(desc(total)) |>
+  # Coloca em formato de tabela
+  knitr::kable(
+    # Define título 
+    caption = "**Tabela 1: Quantidade de filmes lançados em cada mês**",
+    # Define o nome das colunas
+    col.names = c("Mês", "Total"),
+    # Centraliza
+    align = "c")
+```
+
+**Dias do ano**
+
+```{r, warning=FALSE}
+imdb |> 
+  # Criando uma coluna chamada "dia"
+  mutate(dia = day(as_date(data_lancamento))) |> 
+  # Cria uma nova coluna chamada "total" com a quantidade de filmes em cada dia
+  count(dia, name = "total") |> 
+  # Coloca em ordem decrescente
+  arrange(desc(total)) |> 
+  # Coloca em formato de tabela
+  knitr::kable(
+    # Define título 
+    caption = "**Tabela 2: Quantidade de filmes lançados em cada dia**",
+    # Define o nome das colunas
+    col.names = c("Dia", "Total"),
+    # Centraliza
+    align = "c")
+```
+
+**Bônus: dia da semana!**
+
+```{r, warning=FALSE}
+imdb |> 
+  # Criando uma coluna chamada "dia_lancamento"
+  mutate(           # A função weekday mostra o dia da semana
+    dia_lancamento = weekdays(as_date(data_lancamento))) |> 
+  # Remove os NA's
+  drop_na() |> 
+  # Cria uma nova coluna chamada "total" com a quantidade de filmes em cada dia
+  count(dia_lancamento, name = "total") |> 
+  # Coloca em ordem decrescente
+  arrange(desc(total)) |>
+  # Coloca em formato de tabela
+  knitr::kable(
+    # Define título 
+    caption = "**Tabela 3: Quantidade de filmes lançados em cada dia da semana**",
+    # Define o nome das colunas
+    col.names = c("Dia da semana", "Total"),
+    # Centraliza
+    align = "c")
+```
+
+###### 2. Qual o top 5 países com mais filmes na base?
+
+Veja abaixo que foi necessário fazer uma transformação no dataset. Basicamente, utilzamos a função `separate_longer_delim` para "esticar verticalmente" a nossa base. Em outras palavras, desagregamos os valores da coluna *pais* em novas linhas, para contar quantas vezes cada país aparece em nossa bae.
+
+```{r}
+imdb |>
+  # Separa os valores em novas linhas
+  separate_longer_delim(
+    # Coluna a ser desagregada
+    cols = pais,
+    # Delimitador
+    delim = ", "
+  ) |>
+  # Cria uma nova coluna chamada "total" com a quantidade de filmes em cada país
+  count(pais, name = "total") |>
+  # Coloca em ordem decrescente
+  arrange(desc(total)) |>
+  # Seleciona os 5 primeiros
+  head(n = 5) |> 
+  # Coloca em formato de tabela
+  knitr::kable(
+    # Define título 
+    caption = "**Tabela 4: Top 5 países com mais filmes**",
+    # Define o nome das colunas
+    col.names = c("Dia", "Total"),
+    # Centraliza
+    align = "c")
+```
+
+###### 3. Liste todas as moedas que aparecem nas colunas `orcamento` e `receita` da base `imdb_completa`.
+
+Mais uma vez foi necessário fazer uma transformação no dataset. Desta vez, utilizamos a função `separate_wider_delim` para "alongar horizontalmente" a nossa base. Criamos novas colunas com tipo de moeda do orçamento e da receita para, em seguida, listar todos os tipos que aparecem.
+
+```{r}
+imdb |>
+  # Seleciona somente as colunas "orcamento" e "receita"
+  select(orcamento, receita) |>
+  # Separa os valores em novas colunas
+  separate_wider_delim(
+    # Coluna a ser desagregada
+    cols = orcamento,
+    # Delimitador
+    delim = " ",
+    # Nome das novas colunas
+    names = c("moeda_orcamento", "orcamento")
+  ) |>
+  # Separa os valores em novas colunas
+  separate_wider_delim(
+    # Coluna a ser desagregada
+    cols = receita,
+    # Delimitador
+    delim = " ",
+    # Nome das novas colunas
+    names = c("moeda_receita", "receita")
+  ) |>
+  # Pega somente as linhas únicas (para uma mesma moeda não aparecer duas vezes)
+  distinct(moeda_orcamento, moeda_receita) |> 
+  # Retira os NA's
+  drop_na(moeda_orcamento, moeda_receita) |> 
+  # Coloca em formato de tabela
+  knitr::kable(
+    # Define título 
+    caption = "**Tabela 5: Moedas**",
+    # Define o nome das colunas
+    col.names = c("Orçamento", "Receita"),
+    # Centraliza
+    align = "c")
+```
+
+Veja que temos diferentes tipos de moedas na coluna `orcamento` mas apenas dólares (\$) na coluna `receita`.
+
+###### 4. Considerando apenas orçamentos e receitas em dólar (\$), qual o gênero com maior lucro? E com maior nota média?
+
+Vamos começar analisando os gêneros com maior lucro e, depois, com a maior nota média.
+
+**Gêneros com maior lucro**
+
+Mais uma vez separamos o tipo de moeda e os valores correspondentes em novas colunas. Essa operação foi necessária para transformarmos os valores em formato numérico e, em seguida, fazer o cálculo do lucro.
+
+```{r}
+imdb |>
+  # Separa o tipo de moeda e valor (essas duas infos. estavam juntas em uma mesma célula)
+  separate_wider_delim(
+    # Coluna a ser desagregada
+    cols = orcamento,
+    # Delimitador
+    delim = " ",
+    # Nome das novas colunas
+    names = c("moeda_orcamento", "orcamento")
+  ) |>
+  # Separa o tipo de moeda e valor (essas duas infos. estavam juntas em uma mesma célula)
+  separate_wider_delim(
+    # Coluna a ser desagregada
+    cols = receita,
+    # Delimitador
+    delim = " ",
+    # Nome das novas colunas
+    names = c("moeda_receita", "receita")
+  ) |>
+  # Separa os valores em novas linhas
+  separate_longer_delim(
+    # Coluna a ser desagregada
+    cols = genero,
+    # Delimitador
+    delim = ", " # É preciso colocar espaço depois da vírgula
+  ) |>
+  # Filtra somente as linhas em que o tipo de moeda era o dólar ($)
+  filter(
+    # Detecta o "$"
+    str_detect(moeda_orcamento, "\\$"),
+    str_detect(moeda_receita, "\\$")
+    # OBS.: é preciso usar \\ para escapar o $, já que é um caracter especial 
+  ) |>
+  # Mutate para calcular o lucro
+  mutate(
+    # Transforma a variável 'orcamento' em dbl
+    orcamento = as.numeric(orcamento),
+    # Transforma a variável 'receita' em dbl
+    receita = as.numeric(receita),
+    # Cria uma nova coluna que armazena o lucro (receita - orcamento)
+    lucro = receita - orcamento,
+    # Coloca a coluna 'lucro' do lado da coluna 'receita'
+    .after = receita
+  ) |>
+  # Agrupa pela variável 'genero'
+  group_by(genero) |>
+  # Soma o lucro por gênero
+  summarise(lucro_genero = sum(lucro)) |>
+  # Ordena em ordem decrescente o lucro
+  arrange(desc(lucro_genero)) |> 
+  # Coloca em formato de tabela
+  knitr::kable(
+    # Define título 
+    caption = "**Tabela 6: Gêneros com maiores lucros (em dólares)**",
+    # Define o nome das colunas
+    col.names = c("Gênero", "Lucro"),
+    # Centraliza
+    align = "c",
+    # Define a vírgula como separador dos decimais
+    format.args = list(decimal.mark = ",", big.mark = ".")
+  )
+```
+
+**Bônus: lucro corrigido pela inflação**
+
+Há de se considerar duas questões que tornam a comparação mais complexa do que a simples diferença entre a receita e o orçamento. Primeiro, se um filme apresenta, por exemplo, três gêneros, cada gênero deste filme terá um valor correspondente de orçamento, receita e lucro. Desse modo, gêneros que aparecem em vários filmes, mas de forma secundária, apresentarão, inevitavelmente, um lucro maior. Conforme não temos como diferenciar qual o gênero principal de cada filme (pois estão listados em ordem alfabética, não por relevância), fica somente o aviso.
+
+Em segundo lugar, os valores de orçamento e receita não foram ajustados pela inflação, o que invalida a comparação entre filmes de diferentes épocas. Assim, aqui, vamos lidar somente com este segundo problema. Abaixo, apresentamos uma nova comparação com os valores de orçamento e receita reajustado pela inflação.
+
+O primeiro passo, então, é buscar uma base de dados contendo uma série histórica com a inflação dos EUA. Uma rápida busca na internet e achamos o site do U.S. Bureau of Labor Statistics que disponibiliza o Consumer Price Index (CPI) dos EUA desde 1913.
+
+O site com a [Série histórica com a inflação dos EUA](https://data.bls.gov/pdq/SurveyOutputServlet) pode ser acessado acessando o link.
+
+**Base com série história do Consumer Price Index (USA)**
+
+Para fazer o ajuste pela inflação, queremos a média anual Consumer Index Price. Por esta razão, tivemos que fazer uma transformação na base. Utilizando a função `pivot_longer`, transformamos cada mês em linhas e o colocamos em uma nova coluna chamada `mes`. Em seguida, agrupamos por ano (`Year`) e calculamos a média.
+
+```{r}
+# Importando a base com a série histórica
+
+cpi_usa <- read_excel("dados/SeriesReport-20231022214852_d55f27.xlsx", skip = 11)
+
+cpi_usa <- cpi_usa |>
+  # Transforma as colunas em linhas
+  pivot_longer(
+    # Colunas a serem pivotadas
+    cols = Jan:Dec,
+    # Nome da nova coluna contendo os meses
+    names_to = "mes",
+    # Nome da nova coluna contendo os valores de cada mes 
+    values_to = "cpi"
+  ) |> 
+  # Agrupa por ano
+  group_by(Year) |>
+  # Faz a média co CPI por ano
+  summarise(cpi_avg_annual = mean(cpi))
+```
+
+**Inflação 2022**
+
+Tamb´pem salvamos em um objetoo CPI de 2022, último ano disponível na base.
+
+```{r}
+current_inflation <- cpi_usa |> 
+  filter(Year == 2022) |> pull() # Coloca a média do CPI em 2022 em um vetor
+```
+
+**Fórmula para o ajuste pela inflação**
+
+$$valor_{atual} = valor_{ano-t}(\frac{IPC_{atual}}{IPC_{ano-t}})$$
+
+Para confirmar os resultados manualmente, basta acessar o seguinte endereço: <https://www.bls.gov/data/inflation_calculator.htm>
+
+**Ajustando pela inflação**
+
+Salvamos a nossa base em um novo objeto com os valores do orçamento e receita ajustados pela inflação. Muitas transformações foram feitas até chegarmos aos valores ajsutados. Resumindo os procedimentos:
+
+1.  Criamos novas colunas somente com os valores das colunas `orcamento` e `receita`;\
+
+2.  Filtramos somente os valores que estavam em dólares (\$);
+
+3.  Transformamos os valores das colunas `orcamento` e `receita` em formato numérico e calculamos o lucro;
+
+4.  Ajustamos o valores das colunas `orcamento`, `receita` e `lucro` pela inflação (para valores de 2022)
+
+```{r}
+# Base imdb com valores ajustados pela inflação
+imdb_adjusted_inf <- imdb |>
+  # Separa o tipo de moeda e valor (essas duas infos. estavam juntas em uma mesma célula)
+  separate_wider_delim(
+    # Coluna a ser desagregada
+    cols = orcamento,
+    # Delimitador
+    delim = " ",
+    # Nome das novas colunas
+    names = c("moeda_orcamento", "orcamento")
+  ) |>
+  # Separa o tipo de moeda e valor (essas duas infos. estavam juntas em uma mesma célula)
+  separate_wider_delim(
+    # Coluna a ser desagregada
+    cols = receita,
+    # Delimitador
+    delim = " ",
+    # Nome das novas colunas
+    names = c("moeda_receita", "receita")
+  ) |>
+  # Separa os valores em novas linhas
+  separate_longer_delim(
+    # Coluna a ser desagregada
+    cols = genero,
+    # Delimitador
+    delim = ", " # É preciso colocar espaço depois da vírgula
+  ) |>
+  # Filtra somente as linhas em que o tipo de moeda era o dólar ($)
+  filter(
+    # Detecta o "$"
+    str_detect(moeda_orcamento, "\\$"),
+    str_detect(moeda_receita, "\\$")
+    # OBS.: é preciso usar \\ para escapar o $, já que é um caracter especial 
+  ) |>
+  # Mutate para calcular o lucro
+  mutate(
+    # Transforma a variável 'orcamento' em dbl
+    orcamento = as.numeric(orcamento),
+    # Transforma a variável 'receita' em dbl
+    receita = as.numeric(receita),
+    # Cria uma nova coluna que armazena o lucro (receita - orcamento)
+    lucro = receita - orcamento,
+    # Coloca a coluna 'lucro' do lado da coluna 'receita'
+    .after = receita
+  ) |> 
+  # Juntando a base do imdb com a série histórica do CPI dos EUA
+  left_join(cpi_usa, by = c("ano" = "Year")) |> 
+  # Mutate para corrigir os valores para o ano de 2022
+  mutate(
+    # Corrige o orçamento pela inflação
+    orcamento_corrigido = orcamento*(current_inflation/cpi_avg_annual),
+    # Corrige a receita pela inflação
+    receita_corrigida = receita*(current_inflation/cpi_avg_annual),
+    # Corrige o lucro pela inflação
+    lucro_corrigido = lucro*(current_inflation/cpi_avg_annual))
+
+imdb_adjusted_inf |> 
+  # Agrupa pela variável 'genero'
+  group_by(genero) |>
+  # Soma o lucro por gênero
+  summarise(lucro_genero = sum(lucro_corrigido)) |>
+  # Ordena em ordem decrescente o lucro
+  arrange(desc(lucro_genero)) |> 
+  # Coloca em formato de tabela
+  knitr::kable(
+    # Define título 
+    caption = "**Tabela 6: Gêneros com maiores lucros (em dólares e ajustado pela inflação)**",
+    # Define o nome das colunas
+    col.names = c("Gêneros", "Lucro"),
+    # Centraliza
+    align = "c",
+    # Define a vírgula como separador dos decimais
+    format.args = list(decimal.mark = ",", big.mark = ".")
+  )
+```
+
+```{r}
+# Generos com a maior nota média
+imdb |> 
+  # Filtra somente as linhas em que o tipo de moeda era o dólar ($)
+  filter(
+    str_detect(orcamento, "\\$"),
+    str_detect(receita, "\\$")
+  ) |> 
+  # Separa os valores em novas linhas
+  separate_longer_delim(
+    # Coluna a ser desagregada
+    cols = genero,
+    # Delimitador
+    delim = ", " # É preciso colocar espaço depois da vírgula
+  ) |> 
+  # Agrupa pela variável 'genero'
+  group_by(genero) |>
+  # Média ponderada da nota
+  summarise(nota_media = weighted.mean(nota_imdb, num_avaliacoes)) |> 
+  # Ordena pela maior nota média ponderada
+  arrange(desc(nota_media)) |> 
+  knitr::kable(
+    # Define título 
+    caption = "**Tabela 7: Gêneros com as maiores notas (média ponderada pela quantidade de avaliações)**",
+    # Define o nome das colunas
+    col.names = c("Gêneros", "Nota média"),
+    # Centraliza
+    align = "c",
+    # Define a vírgula como separador dos decimais
+    format.args = list(decimal.mark = ",")
+  )
+```
+
+#### Questão 5
+
+##### 5. Dentre os filmes na base `imdb_completa`, escolha o seu favorito. Entãofaça os itens a seguir:
+
+```{r}
+# Meu filme favorito
+filme_fav <- imdb |> 
+  filter(titulo_original == "The Grand Budapest Hotel") |> pull(titulo_original)
+```
+
+a)  Quem dirigiu o filme? Faça uma ficha dessa pessoa: idade (hoje em dia ou data de falecimento), onde nasceu, quantos filmes já dirigiu, qual o lucro médio dos filmes que dirigiu (considerando apenas valores em dólar) e outras informações que achar interessante (base `imdb_pessoas`).
+
+```{r}
+# Vamos extrair algumas informações de quem dirigiu meu filme favorito
+
+# Nome 
+direcao_nm <- imdb |> 
+  # Pega meu filme favorito
+  filter(titulo_original == filme_fav) |> 
+  # Coloca o nome de quem dirigiu meu filme favorito em uma string
+  pull(direcao)
+
+# Idade
+idade <- imdb_pessoas |> 
+  # Pega o nome de quem dirigiu meu filme favorito
+  filter(nome == direcao_nm) |> 
+  # Cria uma coluna chamada "idade" com a idade de quem dirigiu
+  mutate(idade = year(today())  - year(data_nascimento),
+         # Coloca a coluna "idade" depois da coluna "data_nascimento"
+         .after = data_nascimento) |> 
+  # Coloca a idade em uma string
+  pull(idade)
+
+# Cidade de nascimento
+cidade_nasc <- imdb_pessoas |> 
+  # Pega o nome de quem dirigiu meu filme favorito
+  filter(nome == direcao_nm) |> 
+  # Desagrega a coluna "local_nascimento" em três níveis
+  separate_wider_delim(
+    cols = local_nascimento,
+    delim = ", ",
+    names = c("cidade", "estado", "pais")
+  ) |> 
+  # Coloca a cidade em uma string
+  pull(cidade)
+
+# Estado de nascimento
+cidade_nasc <- imdb_pessoas |> 
+  # Pega o nome de quem dirigiu meu filme favorito
+  filter(nome == direcao_nm) |> 
+  # Desagrega a coluna "local_nascimento" em três níveis
+  separate_wider_delim(
+    cols = local_nascimento,
+    delim = ", ",
+    names = c("cidade", "estado", "pais")
+  ) |> 
+  # Coloca o estado em uma string
+  pull(estado)
+
+# País de nascimento
+cidade_nasc <- imdb_pessoas |> 
+  # Pega o nome de quem dirigiu meu filme favorito
+  filter(nome == direcao_nm) |> 
+  # Desagrega a coluna "local_nascimento" em três níveis
+  separate_wider_delim(
+    cols = local_nascimento,
+    delim = ", ",
+    names = c("cidade", "estado", "pais")
+  ) |> 
+  # Coloca o país em uma string
+  pull(pais)
+
+# Quantos filmes já dirigiu
+qtde_filmes <- imdb |> 
+  # Pega o nome de quem dirigiu meu filme favorito
+  filter(direcao == direcao_nm) |> 
+  # Conta quantos filme já dirigiu
+  count(direcao) |> 
+  # Coloca a qtde. de filmes que dirigiu em uma string
+  pull(n)
+
+# Lucro médio dos filmes que já digiriu (com valores ajustados pela inflação)
+
+lucro_medio <- imdb_adjusted_inf |> 
+  # Pega o nome de quem dirigiu meu filme favorito
+  filter(direcao == direcao_nm) |> 
+  # Agrupa por direção
+  group_by(direcao) |>
+  # Calcula a média do lucro (já considerando os efeitos da inflação)
+  summarise(lucro_medio = mean(lucro_corrigido)) |> 
+  # Coloca o lucro médio em uma string
+  pull()
+```
+
+b)  Qual a posição desse filme no ranking de notas do IMDB? E no ranking de lucro (considerando apenas valores em dólar)?
+
+```{r}
+# Ranking de nota
+
+# Id do meu filme favorito
+id_filme_fav <- imdb |> 
+  # Pega o nome do meu filme favorito
+  filter(titulo_original == filme_fav) |>
+  # Coloca o id do meu filme favorito emuma string
+  pull(id_filme)
+
+ranking_nota_filme_fav <- imdb_avaliacoes |> 
+  # Coloca em ordem decrescente a nota media ponderada dos filmes
+  arrange(desc(nota_media_ponderada)) |> 
+  # Cria uma coluna chamada "ranking"
+  mutate(ranking = dense_rank(desc(nota_media_ponderada))) |> 
+  # Filtra o id do meu filme favorito
+  filter(id_filme == id_filme_fav) |>
+  # Coloca a posição (no ranking de média) do meu filme favorito em uma string
+  pull(ranking)
+
+# Ranking lucro
+
+ranking_lucro_filme_fav <- imdb_adjusted_inf |> 
+  # Coloca em ordem decrescente o lucro
+  arrange(desc(lucro_corrigido)) |> 
+  # Cria uma coluna chamada "ranking"
+  mutate(ranking = dense_rank(desc(lucro_corrigido))) |> 
+  # Agrupa pela id de cada filme
+  group_by(id_filme) |> 
+  # Filtra o id do meu filme favorito
+  filter(id_filme == id_filme_fav) |> 
+  # Ver nota 1
+  distinct(ranking) |> 
+  # Coloca a posição (no ranking de lucro) do meu filme favorito em uma string
+  pull(ranking)
+
+# Nota 1: os filmes que possuem mais de um gênero aparecem mais de uma vez, conforme
+# a transformação que fizemos acima. Assim, usamos a função distinct() para pegar
+# somente uma vez a posição do meu filme favorito
+```
+
+c)  Em que dia esse filme foi lançado? E dia da semana? Algum outro filme foi lançado no mesmo dia? Quantos anos você tinha nesse dia?
+
+```{r}
+dia_lancamento <- imdb |> 
+  # Pega meu filme favorito
+  filter(titulo_original == filme_fav) |>
+  # Cria uma coluna com o dia do lançamento 
+  mutate(dia_lancamento = day(data_lancamento)) |>
+  # Coloca o dia do lancamento em uma string
+  pull(dia_lancamento)
+
+dia_semana_lancamento <- imdb |> 
+  # Pega meu filme favorito
+  filter(titulo_original == filme_fav) |> 
+  # Cria uma coluna com o dia da semana
+  mutate(dia_semana_lancamento = weekdays(as.Date(data_lancamento))) |> 
+  # Coloca o dia da semana em uma string
+  pull(dia_semana_lancamento)
+
+minha_idade <- imdb |> 
+  # Pega meu filme favorito
+  filter(titulo_original == filme_fav) |>
+  # Cria um nova coluna com a minha idade
+  mutate(minha_idade = year(data_lancamento) - year("2001-02-09")) |> 
+  # Coloca a minha idade em uma string
+  pull(minha_idade)
+
+dt_filme_fav <- imdb |> 
+  # Pega meu filme favorito
+  filter(titulo_original == filme_fav) |> 
+  # Coloca a data de lançamento em uma string
+  pull(data_lancamento)
+
+qtde_filmes_lancados_msm_dia <- imdb |> 
+  # Pega meu filme favorito
+  filter(data_lancamento == dt_filme_fav) |>
+  # Conta quantos filmes foram lançados naquela data
+  count() |> 
+  # Coloca a qtde em uma string
+  pull()
+```
+
+d)  Faça um gráfico representando a distribuição da nota atribuída a esse filme por idade (base `imdb_avaliacoes`).
+
+```{r}
+id_filme_fav <- imdb |> 
+  filter(titulo_original == filme_fav) |> 
+  pull(id_filme)
+
+nota_idade <- imdb_avaliacoes |> 
+  select(contains("nota_media_idade"))
+
+imdb_avaliacoes |> 
+  filter(id_filme == id_filme_fav) |> view()
+```
+
+```{r}
+# Arrumando a base
+df <- imdb_avaliacoes |> 
+  # Selecionando somente as colunas de interesse
+  select(id_filme, contains("nota_media_idade")) |> 
+  # Alongando nossa base
+  pivot_longer(
+    cols = contains("nota_media_idade"),
+    names_to = "faixa_etaria",
+    values_to = "nota_media"
+  ) |> 
+  mutate(fx_etaria =
+           case_when(
+             faixa_etaria == "nota_media_idade_0_18" ~ "0 a 18 anos",
+             faixa_etaria == "nota_media_idade_18_30" ~ "18 a 30 anos",
+             faixa_etaria == "nota_media_idade_30_45" ~ "30 a 45 anos",
+             faixa_etaria == "nota_media_idade_45_mais" ~ "Mais de 45 anos"
+           )
+  )
+```
+
+```{r}
+theme_set(theme_minimal(base_family = "Helvetica"))
+
+theme_update(
+  panel.grid.minor = element_blank(),
+  panel.grid.major = element_blank(),
+  axis.line.x = element_line(color = "black", linewidth = .6),
+  axis.ticks.x = element_line(color = "black", linewidth = .6),
+  axis.title.y = element_blank(),
+  axis.text = element_text(family = "Helvetica", size = 11, color = "black"),
+  plot.margin = margin(10, 15, 10, 15),
+  plot.title = element_text(face = "bold"),
+  plot.background = element_rect(
+    # Altera o preenchimento
+    fill = "grey80"
+  ))
+
+df |> 
+  # Selecionando somente o filme de interesse
+  filter(id_filme == id_filme_fav) |> 
+  ggplot() +
+  aes(x = fx_etaria, y = nota_media) +
+  geom_col(aes(fill = fx_etaria)) + 
+  coord_flip() + ######### talvez tenha que retirar
+  facet_wrap(~ fx_etaria, ncol = 1, scales = "free_y") + 
+  scale_y_continuous(
+    breaks = seq(0, 10, by = 1),
+    expand = c(0, 0), 
+    limits = c(0, 10),
+    #labels = scales::number,
+    #name = "Proportion"
+  ) +
+  scale_x_discrete(
+    guide = "none",
+    expand = expansion(add = c(.8, .6))
+  ) +
+  theme(
+    strip.text = element_text(
+      hjust = 0, 
+      margin = margin(1, 0, 1, 0), 
+      size = rel(1.1), 
+      face = "bold"
+    )
+  ) +
+  geom_text(
+    aes(
+      label = paste0("  ", sprintf("%2.1f", nota_media), "  "),
+      #color = "black", 
+      hjust = nota_media > .05
+    ),
+    size = 4, 
+    fontface = "bold", 
+    family = "Helvetica"
+  ) +
+  scale_fill_manual(
+    values = c("#F5C518", "#F5C518", "#F5C518", "#F5C518"),
+    guide = "none"
+  ) +
+  labs(
+    title = "The Grand Hotel Budapest",
+    subtitle = "Nota média por faixa etária",
+    caption = "Fonte: IMDb",
+    y = "Nota média"
+  )
+```
