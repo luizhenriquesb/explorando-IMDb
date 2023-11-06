@@ -617,7 +617,7 @@ qtde_filmes_lancados_msm_dia <- imdb |>
 
 **d)** Faça um gráfico representando a distribuição da nota atribuída a esse filme por idade (base `imdb_avaliacoes`).
 
-Para representar visualmente a distribuição da nota atribuída a `r filme_fav` por idade, nos inspiramos em um gráfico feito por Cedric Scherer. O link com o gráfico feito por ele está disponivel [neste link](https://www.cedricscherer.com/2023/10/26/yet-another-how-to-on-labelling-bar-graphs-in-ggplot2/).
+Para representar visualmente a distribuição da nota atribuída a `r filme_fav` por idade, nos inspiramos em um gráfico feito por Cedric Scherer. O link com o gráfico feito por ele está disponível [neste link](https://www.cedricscherer.com/2023/10/26/yet-another-how-to-on-labelling-bar-graphs-in-ggplot2/).
 
 Antes de iniciar o `ggplot`, precisamos fazer algumas transformações.
 
