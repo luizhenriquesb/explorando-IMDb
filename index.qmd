@@ -298,7 +298,7 @@ Salvamos a nossa base em um novo objeto com os valores do orçamento e receita a
 
 1.  Criamos novas colunas somente com os valores das colunas `orcamento` e `receita`;
 
-2.  Filtramos somente os valores que estavam em dólares (\$);
+2.  Filtramos somente os valores que estavam em dólares (\$) e os filmes que foram lançados depois de 1913;
 
 3.  Transformamos os valores das colunas `orcamento` e `receita` em formato numérico e calculamos o lucro;
 
@@ -342,8 +342,10 @@ imdb_adjusted_inf <- imdb |>
   filter(
     # Detecta o "$"
     str_detect(moeda_orcamento, "\\$"),
-    str_detect(moeda_receita, "\\$")
+    str_detect(moeda_receita, "\\$"),
     # OBS.: é preciso usar \\ para escapar o $, já que é um caracter especial 
+    # Filtrando da base somente os filmes lançados de 1913 em diante
+    ano >= 1913
   ) |>
   # Mutate para calcular o lucro
   mutate(
@@ -615,7 +617,7 @@ qtde_filmes_lancados_msm_dia <- imdb |>
 
 **d)** Faça um gráfico representando a distribuição da nota atribuída a esse filme por idade (base `imdb_avaliacoes`).
 
-Para representar visualmente a distribuição da nota atribuída a `r filme_fav` por idade, nos inspiramos em um gráfico feito por Cedric Scherer. O link com o gráfico feito por ele está disponel [neste link](https://www.cedricscherer.com/2023/10/26/yet-another-how-to-on-labelling-bar-graphs-in-ggplot2/).
+Para representar visualmente a distribuição da nota atribuída a `r filme_fav` por idade, nos inspiramos em um gráfico feito por Cedric Scherer. O link com o gráfico feito por ele está disponivel [neste link](https://www.cedricscherer.com/2023/10/26/yet-another-how-to-on-labelling-bar-graphs-in-ggplot2/).
 
 Antes de iniciar o `ggplot`, precisamos fazer algumas transformações.
 
