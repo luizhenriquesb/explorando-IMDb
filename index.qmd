@@ -6,6 +6,8 @@ format: html
 editor: visual
 ---
 
+::: {style="text-align: justify"}
+
 ### Introdução
 
 Esta é uma breve análise do Internet Movie Database (IMDb). Vamos utilizar, aqui, três bases disponibilizadas pela Curso-R que armazenam, cada qual, informações sobre milhares de filmes, sobre as pessoas que dirigiram, que atuaram e resumos estatísticos sobre a avaliação que estes filmes receberam.
@@ -288,7 +290,7 @@ current_inflation <- cpi_usa |>
 
 Vamos utilizar a seguinte fórmula para fazer o ajuste:
 
-$$valor_{atual} = valor_{ano-t}(\frac{CPI_{atual}}{CPI_{ano-t}})$$
+$$valor_{atual} = valor_{ano\ T}(\frac{CPI_{atual}}{CPI_{ano\ T}})$$
 
 Para confirmar os resultados manualmente, basta acessar o seguinte endereço: <https://www.bls.gov/data/inflation_calculator.htm>
 
@@ -726,3 +728,6 @@ df |>
     y = "Nota média"
   )
 ```
+
+
+:::
