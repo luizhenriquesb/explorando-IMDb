@@ -7,7 +7,6 @@ editor: visual
 ---
 
 ::: {style="text-align: justify"}
-
 ### Introdução
 
 Esta é uma breve análise do Internet Movie Database (IMDb). Vamos utilizar, aqui, três bases disponibilizadas pela Curso-R que armazenam, cada qual, informações sobre milhares de filmes, sobre as pessoas que dirigiram, que atuaram e resumos estatísticos sobre a avaliação que estes filmes receberam.
@@ -24,6 +23,7 @@ library(basesCursoR)
 #### Importando os datasets
 
 ```{r, message=FALSE, results='hide'}
+# remotes::install_github("curso-r/basesCursoR")
 imdb <- basesCursoR::pegar_base("imdb_completa")
 imdb_pessoas <- basesCursoR::pegar_base("imdb_pessoas")
 imdb_avaliacoes <- basesCursoR::pegar_base("imdb_avaliacoes")
@@ -728,6 +728,4 @@ df |>
     y = "Nota média"
   )
 ```
-
-
 :::
