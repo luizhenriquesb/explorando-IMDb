@@ -7,6 +7,7 @@ editor: visual
 ---
 
 ::: {style="text-align: justify"}
+
 ### Introdução
 
 Esta é uma breve análise do Internet Movie Database (IMDb). Vamos utilizar, aqui, três bases disponibilizadas pela Curso-R que armazenam, cada qual, informações sobre milhares de filmes, sobre as pessoas que dirigiram, que atuaram e resumos estatísticos sobre a avaliação que estes filmes receberam.
@@ -17,6 +18,8 @@ Esta é uma breve análise do Internet Movie Database (IMDb). Vamos utilizar, aq
 library(tidyverse)
 library(knitr)
 library(readxl)
+# install.packages("devtools")
+# devtools::install_github("curso-r/basesCursoR")
 library(basesCursoR)
 ```
 
